@@ -1,0 +1,37 @@
+probest = function(xtabs.obj){
+  require(tidyverse)
+  require(mosaic)
+  require(moderndive)
+  require(knitr)
+  require(kableExtra)
+  count.table = xtabs.obj %>% as.data.frame()
+  jprob.table = xtabs.obj %>% prop.table() %>% as.data.frame()
+  cprob1.table = xtabs.obj %>% prop.table(margin = 2) %>% as.data.frame()
+  cprob2.table = xtabs.obj %>% prop.table(margin = 1) %>% as.data.frame()
+  full.table = left_join(count.table,
+                         jprob.table,
+                         by = names(count.table)[-3]) %>% 
+    left_join(cprob1.table,
+              by = names(count.table[-3])) %>% 
+    left_join(cprob2.table,
+              by = names(count.table[-3])) %>% 
+    mutate(A = Freq.y/Freq.y.y,
+           B = Freq.y/Freq.x.x,
+           OR = A + B - Freq.y) %>% 
+    mutate_if(is.numeric, round, digits = 2) %>% 
+    rename("n()" = Freq.x,
+           "P(A)" = A,
+           "P(B)" = B,
+           "P(A & B)" = Freq.y,
+           "P(A $|$ B)" = Freq.x.x,
+           "P(B $|$ A)" = Freq.y.y,
+           "P(A or B)" = OR) %>%
+    kable("html",
+          align = c(rep('l', 2), 
+                    'r',
+                    rep('c', 6))) %>% 
+    kable_classic(full_width = F,
+                    lightable_options = "hover",
+                    html_font = "sans-serif")
+  return(full.table)
+}
